@@ -1,0 +1,18 @@
+[
+			{
+				"caption": "winRSync: Synchronize the whole tree",
+				"command": "winrsync_tree"
+			},
+			{
+				"caption": "winRSync: Synchronize the whole tree to remote(s)",
+				"command": "winrsync_tree_to_remote"
+			},
+			{
+				"caption": "winRSync: Get the file from remote",
+				"command": "winrsync_file_from_remote"
+			},
+			{
+				"caption": "winRSync: Send the file to remote(s)",
+				"command": "winrsync_file_to_remote"
+			}
+]

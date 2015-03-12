@@ -1,0 +1,4 @@
+[
+    { "keys": ["super+shift+r"], "command": "winRSync_tree" },
+    { "keys": ["super+shift+alt+r"], "command": "winRSync_file_from_remote" },
+]

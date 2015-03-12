@@ -1,0 +1,24 @@
+{
+	"winrsync.hosts" : [
+		{
+            "remote_host" : "devserver1.test.com",
+            "remote_user" : "jdoe",
+            "remote_path" : "/usr/local/mywork",
+            "main"		  : true,
+            "excludes" : []
+        },
+		{
+            "remote_host" : "devserver2.test.com",
+            "remote_user" : "jsmith",
+            "remote_path" : "/usr/local/jdoe_work",
+            "excludes" : [ ".git", "*txt"]
+        }
+	],
+    "winrsync.local_path" : "/Users/jdoe/work",
+    "winrsync.check_remote_git" : false,
+    "winrsync.excludes" : [],
+    "winrsync.use_ssh"           : true,
+    "winrsync.remote_is_master"  : true,
+    "winrsync.delete_slave"      : true,
+
+}
