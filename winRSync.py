@@ -27,7 +27,6 @@ DEFAULT_CONF = {
 #     ]
 
 PREF_PREFIX = 'winrsync.'
-USER_CONF = sublime.load_settings('winRSync.sublime-settings')
 annoy_on_rsync_error = True
 annoy_on_hash_different = []
 git_hash_per_path = {}
@@ -135,6 +134,7 @@ class STRSync:
     #################################
     # settings and preferences handling
     def prefs(self, preference):
+        USER_CONF = sublime.load_settings('winRSync.sublime-settings')
         #return self.view.settings().get(PREF_PREFIX + preference, DEFAULT_CONF.get(PREF_PREFIX + preference, None))
         return USER_CONF.get(PREF_PREFIX + preference, DEFAULT_CONF.get(PREF_PREFIX + preference, None))
 
