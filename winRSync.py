@@ -7,12 +7,16 @@ import sublime_plugin
 
 DEFAULT_CONF = {
     'winrsync.local_path'        : False,
-    'hosts'                     : [ False ],
+    'winrsync.hosts'             : [ False ],
     'winrsync.use_ssh'           : True,
     'winrsync.delete_slave'      : True,
     'winrsync.remote_is_master'  : True,
     'winrsync.excludes'          : [],
     'winrsync.check_remote_git'  : False,
+    'winrsync.ssh_path'          : False,
+    'winrsync.git_path'          : False,
+    'winrsync.rsync_path'        : False,
+    'winrsync.cygdrive_prefix'   : '/cygdrive/',
 }
 
 # SPINNER_RESOURCES = [
@@ -27,6 +31,7 @@ DEFAULT_CONF = {
 #     ]
 
 PREF_PREFIX = 'winrsync.'
+USER_CONF = sublime.load_settings('winRSync.sublime-settings')
 annoy_on_rsync_error = True
 annoy_on_hash_different = []
 git_hash_per_path = {}
@@ -53,37 +58,37 @@ def get_path_for(executable_name):
         print( " Can't find {} ... ".format(executable_name)) ## not trying too hard, though :)
         return False
     else:
-        return executable_path[:-1]
+        return executable_path[:-1].rstrip();
 
-rsyncpath = get_path_for('rsync').rstrip()
-sshpath = get_path_for('ssh').rstrip()
-gitpath = get_path_for('git').rstrip()
+rsyncpath = get_path_for('rsync')
+sshpath = get_path_for('ssh')
+gitpath = get_path_for('git')
 
 
 class WinrsyncTreeCommand(sublime_plugin.WindowCommand):
     def run(sef):
-        STRSync(sublime.active_window().active_view()).sync_structure()
+        WinRSync(sublime.active_window().active_view()).sync_structure()
 
 class WinrsyncTreeToRemoteCommand(sublime_plugin.WindowCommand):
     def run(sef):
-        STRSync(sublime.active_window().active_view()).sync_structure_to_remote()
+        WinRSync(sublime.active_window().active_view()).sync_structure_to_remote()
 
 class WinrsyncFileFromRemoteCommand(sublime_plugin.WindowCommand):
     def run(sef):
-        STRSync(sublime.active_window().active_view()).sync_remote_local()
+        WinRSync(sublime.active_window().active_view()).sync_remote_local()
 
 class WinrsyncFileToRemoteCommand(sublime_plugin.WindowCommand):
     def run(sef):
-        STRSync(sublime.active_window().active_view()).sync_local_remote()
+        WinRSync(sublime.active_window().active_view()).sync_local_remote()
 
 
 class RSyncCommand(sublime_plugin.EventListener):
     def on_load_async(self, view):
-        STRSync(view).sync_remote_local()
+        WinRSync(view).sync_remote_local()
     def on_post_save_async(self, view):
-        STRSync(view).sync_local_remote()
+        WinRSync(view).sync_local_remote()
     def on_activated_async(self, view):
-        STRSync(view).check_remote_local_git_hash()
+        WinRSync(view).check_remote_local_git_hash()
 
 class STRSHost(dict):
     def excludes(self):
@@ -94,21 +99,12 @@ class STRSHost(dict):
         return self.get('remote_host', False)
     def path(self):
         return self.get('remote_path', False)
-
-    # def local_path(self):
-    #     return self.prefs('local_path')
-    # def use_ssh(self):
-    #     return self.prefs('use_ssh')
-    # def remote_is_master(self):
-    #     return self.prefs('remote_is_master')
-    # def delete_slave(self):
-    #     return self.prefs('delete_slave')
     def remote_host(self, relative_path=''):
         if self:
             return "{user}{host}".format(
-                            user=self['remote_user'] + '@' if self.get('remote_user', False)  else '',
-                            host=self['remote_host'] if self.get('remote_host', False) else '',
-                            )
+                user=self['remote_user'] + '@' if self.get('remote_user', False)  else '',
+                host=self['remote_host'] if self.get('remote_host', False) else '',
+            )
         else:
             return False
 
@@ -117,13 +113,13 @@ class STRSHost(dict):
             #path = os.path.normpath(self.get('remote_path','')) + relative_path
             path = self.get('remote_path','') + relative_path
             return "{remote_host}{path}".format(
-                            remote_host=self.remote_host(),
-                            path=':'+ path if self.get('remote_path', False) else '',
-                            )
+                remote_host=self.remote_host(),
+                path=':'+ path if self.get('remote_path', False) else '',
+            )
         else:
             return False
 
-class STRSync:
+class WinRSync:
     def __init__(self, view=sublime.active_window().active_view()):
         self.view = view
         self.remote_hash = False
@@ -134,8 +130,6 @@ class STRSync:
     #################################
     # settings and preferences handling
     def prefs(self, preference):
-        USER_CONF = sublime.load_settings('winRSync.sublime-settings')
-        #return self.view.settings().get(PREF_PREFIX + preference, DEFAULT_CONF.get(PREF_PREFIX + preference, None))
         return USER_CONF.get(PREF_PREFIX + preference, DEFAULT_CONF.get(PREF_PREFIX + preference, None))
 
     def hosts(self):
@@ -152,13 +146,13 @@ class STRSync:
         return self.prefs('excludes')
     def local_path(self):
         this_local_path = self.prefs('local_path')
-        this_local_path = '/cygdrive/' + this_local_path.replace(':\\','/').replace('\\','/')
+        this_local_path = self.prefs('cygdrive_prefix') + this_local_path.replace(':\\','/').replace('\\','/')
         #return os.path.normpath(this_local_path) if this_local_path else ''
         return this_local_path if this_local_path else ''
     def file_name(self):
         this_file_name = self.view.file_name();
         if this_file_name :
-            this_file_name = '/cygdrive/' + this_file_name.replace(':\\','/').replace('\\','/')
+            this_file_name = self.prefs('cygdrive_prefix') + this_file_name.replace(':\\','/').replace('\\','/')
             return this_file_name
         else :
             return ''
@@ -180,11 +174,11 @@ class STRSync:
         if not ran_ok:
             raise Exception(local_hash)
         (ran_ok, self.remote_hash) = run_executable(
-                                    [
-                                        sshpath,
-                                        self.main_host().remote_host(),
-                                        'cd {}; git rev-parse HEAD'.format(self.main_host().path()),
-                                    ])
+            [
+                sshpath,
+                self.main_host().remote_host(),
+                'cd {}; git rev-parse HEAD'.format(self.main_host().path()),
+            ])
         if not ran_ok:
             raise Exception(self.remote_hash)
         if self.remote_hash in annoy_on_hash_different:
@@ -305,7 +299,7 @@ class STRSync:
                         ],
                         lambda s: self.handle_error_reponse(s),
                         selected_index=0,
-                            )
+                    )
         else:
             annoy_on_rsync_error = True
         print ("End rsync ")

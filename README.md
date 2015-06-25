@@ -66,3 +66,7 @@ beta
 ```json
 "winrsync.delete_slave": true|false
 ```
+- `winrsync.cygdrive_prefix`cwRsync中目录的前缀，默认"/cygdrive/"
+```json
+"winrsync.delete_slave": "/cygdrive/"
+```
