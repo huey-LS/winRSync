@@ -20,7 +20,8 @@ beta
 ## Remind
 - 本插件会验证光标激活中的文件是否属于local_path，通过后才能使用期rsync相关功能
 - 由于上一条，对于查看图片等sublime中无法让光标激活的文件，无法使用单文件同步，建议在确认修改完毕后使用rsync整个文件目录到远程
-- (Todo later)同由于第一条，第一次rsync由于本地无文件无法正常使用，建议新建然后同步所有文件，然后删除；或者直接执行rsync命令进行同步；
+- ~~(Todo later)同由于第一条，第一次rsync由于本地无文件无法正常使用，建议新建然后同步所有文件，然后删除；或者直接执行rsync命令进行同步；~~
+  移除rsync所有文件时，对当前文件是否local_path下的验证，可以直接同步整个文件夹到本地
 - 本地删除不会rsync到远端，请手动删除远端文件，或使用Synchronize the whole tree to remote(s)操作
 
 ## Options

@@ -235,8 +235,6 @@ class WinRSync:
             self.run_rsync(call_params)
 
     def sync_structure(self):
-        if not self.valid_file_to_process():
-            return
         local_file = self.file_name()
         local_path = self.local_path()
         main_host = self.main_host()
