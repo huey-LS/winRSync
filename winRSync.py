@@ -13,9 +13,6 @@ DEFAULT_CONF = {
     'winrsync.remote_is_master'  : True,
     'winrsync.excludes'          : [],
     'winrsync.check_remote_git'  : False,
-    'winrsync.ssh_path'          : False,
-    'winrsync.git_path'          : False,
-    'winrsync.rsync_path'        : False,
     'winrsync.cygdrive_prefix'   : '/cygdrive/',
 }
 
@@ -31,10 +28,13 @@ DEFAULT_CONF = {
 #     ]
 
 PREF_PREFIX = 'winrsync.'
-USER_CONF = sublime.load_settings('winRSync.sublime-settings')
 annoy_on_rsync_error = True
 annoy_on_hash_different = []
 git_hash_per_path = {}
+
+def get_user_conf(preference):
+    user_conf = sublime.load_settings('winRSync.sublime-settings')
+    return user_conf.get(PREF_PREFIX + preference, DEFAULT_CONF.get(PREF_PREFIX + preference, None))
 
 def run_executable(call_params):
     result_mesg = ""
@@ -58,7 +58,7 @@ def get_path_for(executable_name):
         print( " Can't find {} ... ".format(executable_name)) ## not trying too hard, though :)
         return False
     else:
-        return executable_path[:-1].rstrip();
+        return executable_path[:-1].rstrip()
 
 rsyncpath = get_path_for('rsync')
 sshpath = get_path_for('ssh')
@@ -130,7 +130,7 @@ class WinRSync:
     #################################
     # settings and preferences handling
     def prefs(self, preference):
-        return USER_CONF.get(PREF_PREFIX + preference, DEFAULT_CONF.get(PREF_PREFIX + preference, None))
+        return get_user_conf(preference)
 
     def hosts(self):
         for this_host in self.prefs('hosts'):
@@ -144,15 +144,20 @@ class WinRSync:
     # these are here just to make code shorter and easier to read ...
     def excludes(self):
         return self.prefs('excludes')
+    def normalize_windows_path(self, path):
+        path_prefix = self.prefs('cygdrive_prefix');
+        pattern = re.compile(r':\\|\\')
+        return (path_prefix + pattern.sub('/', path))
+        #return (path_prefix + path.replace(':\\', '/').replace('\\', '/'))
     def local_path(self):
         this_local_path = self.prefs('local_path')
-        this_local_path = self.prefs('cygdrive_prefix') + this_local_path.replace(':\\','/').replace('\\','/')
+        this_local_path = self.normalize_windows_path(this_local_path)
         #return os.path.normpath(this_local_path) if this_local_path else ''
         return this_local_path if this_local_path else ''
     def file_name(self):
         this_file_name = self.view.file_name();
         if this_file_name :
-            this_file_name = self.prefs('cygdrive_prefix') + this_file_name.replace(':\\','/').replace('\\','/')
+            this_file_name = self.normalize_windows_path(this_file_name)
             return this_file_name
         else :
             return ''
