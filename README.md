@@ -4,6 +4,10 @@ sublime text 3 plugin for windows
 ## version
 beta
 
+## 2016/01/11
+- add ssh_port 可配置
+- fix excludes 可用
+
 ## Dependencies
 - cwRsync
 - git
@@ -36,8 +40,9 @@ beta
       "main": true,
       "remote_host": "111.111.111.111",
       "remote_path": "/home/user/remote_folder",
-	  "remote_user": "user"
-	}
+	    "remote_user": "user",
+      "remote_ssh_port": "22"
+	  }
   ]
 ```
 - `winrsync.local_path`本地工作目录配置，windows中使用\\\\

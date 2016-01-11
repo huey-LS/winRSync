@@ -95,6 +95,8 @@ class STRSHost(dict):
         return self.get('excludes', [])
     def host_name(self):
         return self.get('remote_host', False)
+    def ssh_port(self):
+        return self.get('remote_ssh_port', False)
     def user_name(self):
         return self.get('remote_host', False)
     def path(self):
@@ -182,6 +184,7 @@ class WinRSync:
             [
                 sshpath,
                 self.main_host().remote_host(),
+                '-p ' + self.main_host().ssh_port() if self.main_host().ssh_port() else '',
                 'cd {}; git rev-parse HEAD'.format(self.main_host().path()),
             ])
         if not ran_ok:
@@ -271,7 +274,11 @@ class WinRSync:
     def call_params(self, this_host, to_server=True, others=[]):
         call_params = [rsyncpath ,'-a']
         if self.use_ssh():
-            call_params.append('-e ssh')
+            ssh_params = ['-e', 'ssh']
+
+            if this_host.ssh_port():
+                ssh_params.append('\'-p ' + this_host.ssh_port() + '\'')
+            call_params.append(' '.join(ssh_params))
         if not( to_server and self.remote_is_master()) and self.delete_slave():
             call_params.append('--delete')
         excludes = self.excludes()
@@ -281,7 +288,7 @@ class WinRSync:
         # this will introduce a '--exclude' for each excluded path.
         # for a list such as [ '/bla/ble', '/doo/bi', '/a/b/'], the end result
         # will be something like ['--exclude', '/bla/ble','--exclude', '/doo/bi', '--exclude', '/a/b/']
-        excludes = [ item for this_exclude in excludes for item in  ['--exclude', '{}'.format(this_exclude)]]
+        excludes = [ item for this_exclude in excludes for item in  ['--exclude', '\'{}\''.format(this_exclude)]]
 
         call_params.extend(excludes)
         call_params.extend(others)
